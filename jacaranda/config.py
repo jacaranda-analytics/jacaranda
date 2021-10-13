@@ -1,6 +1,4 @@
-import os, torch, numpy, sklearn
-
-
+import os, torch, numpy, sklearn.metrics, typing, math
 
 class config:
     def __init__(
@@ -9,7 +7,7 @@ class config:
         Y:numpy.array,
         loss=torch.nn.MSELoss(),
         device: torch.device = torch.device("cpu"),
-        metric:function = sklearn.metrics.mean_squared_error,
+        metric:typing.Callable = sklearn.metrics.mean_squared_error,
         batchsize: int = 100,
         validation_split: float = 0.2,
         epochs: int = 20,
@@ -17,6 +15,7 @@ class config:
         dir:str = os.getcwd(),
         n_trials: int = 75,
         timeout: float = 600,
+        encode_level:float = 0.5,
     ):
         """
 
@@ -54,6 +53,9 @@ class config:
             metric (function, optional): Function of metric to determine best model. 
             Defaults to sklearn.metrics.mean_squared_error.
 
+            encode_level (int, optional): Number of variable to autoencode to determined 
+            by a proportion (must be  between 0 and 1) Defaults to 0.5
+
         """        ''''''
         self.BATCHSIZE = batchsize
         self.VALIDATION_SPLIT = validation_split
@@ -67,3 +69,4 @@ class config:
         self.N_TRIALS = n_trials
         self.TIMEOUT = timeout
         self.METRIC = metric
+        self.ENCODE_LEVEL = math.floor(X.shape[1]/encode_level)

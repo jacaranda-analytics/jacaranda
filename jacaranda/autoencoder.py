@@ -8,7 +8,8 @@ from torch.utils.data.sampler import SubsetRandomSampler
 import optuna
 from optuna.trial import TrialState
 import sklearn.metrics
-class mlp():
+
+class mlp_hypertune():
     def __init__(self, X, Y, config):
         self.X = X
         self.Y = Y
@@ -16,25 +17,6 @@ class mlp():
         self.model = "Model has not been tuned yet"
         self.model_paramaters = "Model has not been tuned yet"
         self.model_metric = "Model has not been tuned yet"
-
-    def define_model(self, trial):
-        # We optimize the number of layers, hidden units and dropout ratio in each layer.
-        n_layers = trial.suggest_int("n_layers", 1, 3)
-        layers = []
-
-        in_features = self.config.IN_FEATURES_START
-        for i in range(n_layers):
-            out_features = trial.suggest_int("n_units_l{}".format(i), 50, 100)
-            layers.append(nn.Linear(in_features, out_features))
-            layers.append(nn.ReLU())
-            # p = trial.suggest_float("dropout_l{}".format(i), 0, 0.01)
-            # layers.append(nn.Dropout(p))
-
-            in_features = out_features
-        layers.append(nn.Linear(in_features, self.config.CLASSES))
-        # layers.append(nn.LogSoftmax(dim=1)) config.
-
-        return nn.Sequential(*layers)
 
     def data_loader(self):
     
@@ -65,8 +47,17 @@ class mlp():
 
         loss_function = self.config.LOSS
 
-        # Generate the model.
-        model = self.define_model(trial).to(self.config.DEVICE)
+        # Generate the model.'
+        layers = []
+        in_features = self.config.IN_FEATURES_START
+        out_features = self.config.ENCODE_LEVEL
+        layers.append(nn.Linear(in_features, out_features))
+        layers.append(nn.ReLU())
+        in_features = out_features
+        layers.append(nn.Linear(in_features, self.config.CLASSES))
+        model = nn.Sequential(*layers).to(self.config.DEVICE)
+        
+        # model = self.define_model(trial).to(self.config.DEVICE)
 
         # Generate the optimizers.
         optimizer_name = trial.suggest_categorical(
@@ -83,18 +74,18 @@ class mlp():
             model.train()
             for train_data in train_loader:
                 data, target = train_data
-                target = target.unsqueeze(1)
+                # target = target.unsqueeze(1)
                 optimizer.zero_grad()
                 output = model(data)
                 loss = loss_function(output, target)
                 loss.backward()
                 optimizer.step()
 
-            # Validation of the model.
+
             model.eval()
             X_val, y_true = train_data
             y_pred =  model(X_val).detach().numpy()
-            accuracy = self.config.METRIC(y_true, y_pred)
+            accuracy = mean_squared_error(y_true, y_pred)
 
             trial.report(accuracy, epoch)
 
@@ -105,13 +96,25 @@ class mlp():
         return accuracy
 
     def build_model(self,study):
-        model = self.define_model(study.best_trial).to(self.config.DEVICE)
+        
+        class autoencoder_final(nn.Module):
+            def __init__(self,X,encode_level):
+                super(autoencoder_final,self).__init__()
+                self.encoder = nn.Sequential(nn.Linear(X.shape[1],encode_level),nn.ReLU())
+                self.decoder = nn.Linear(encode_level,X.shape[1])
+            def forward(self,x):
+                latent = self.encoder(x)
+                decoded = self.decoder(latent)
+                decoded = torch.sigmoid(decoded)
+                return decoded, latent
+
+        model = autoencoder_final(self.X, self.config.ENCODE_LEVEL).to(self.config.DEVICE)
 
         #Data
         train_loader, _ = self.data_loader()
 
         #Loss
-        loss_function=self.config.LOSS
+        loss_function=nn.MSELoss()
 
         #Optimiser
         optimizer_name = study.best_trial.params['optimizer']
@@ -125,11 +128,11 @@ class mlp():
 
             for train_data in train_loader:
                 data, target = train_data
-                target = target.unsqueeze(1)
+                # target = target.unsqueeze(1)
 
 
                 optimizer.zero_grad()
-                output = model(data)
+                output,_ = model(data)
                 loss = loss_function(output, target)
                 loss.backward()
                 optimizer.step()
@@ -151,7 +154,6 @@ class mlp():
 
         print("Best trial:")
         trial = study.best_trial
-        self.model_metric = trial.value
 
         print("  Value: ", trial.value)
 
@@ -159,9 +161,10 @@ class mlp():
         for key, value in trial.params.items():
             print("    {}: {}".format(key, value))
 
-        self.model_paramaters = trial.params
-
         model = self.build_model(study)
+
+        self.model_metric = trial.value
+        self.model_paramaters = trial.params
         self.model = model
-        
+
         return model
