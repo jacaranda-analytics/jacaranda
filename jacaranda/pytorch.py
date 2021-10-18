@@ -137,7 +137,7 @@ class pytorch_general():
             dataset, batch_size=self.config.BATCHSIZE, sampler=train_sampler
         )
         validation_loader = torch.utils.data.DataLoader(
-            dataset, batch_size=self.config.BATCHSIZE, sampler=valid_sampler
+            dataset, batch_size=len(valid_sampler), sampler=valid_sampler
         )
 
         return train_loader, validation_loader
@@ -182,7 +182,7 @@ class pytorch_general():
 
             # Validation of the model.
             model.eval()
-            X_val, y_true = train_data
+            X_val, y_true = valid_loader
             y_pred =  model(X_val).detach().numpy()
             accuracy = self.config.METRIC(y_true, y_pred)
 
@@ -398,7 +398,7 @@ class pytorch_autoencoder():
             dataset, batch_size=self.config.BATCHSIZE, sampler=train_sampler
         )
         validation_loader = torch.utils.data.DataLoader(
-            dataset, batch_size=self.config.BATCHSIZE, sampler=valid_sampler
+            dataset, batch_size=len(valid_sampler), sampler=valid_sampler
         )
 
         return train_loader, validation_loader
@@ -453,7 +453,7 @@ class pytorch_autoencoder():
 
 
             model.eval()
-            X_val, y_true = train_data
+            X_val, y_true = valid_loader
             y_pred =  model(X_val).detach().numpy()
             accuracy = self.config.METRIC(y_true, y_pred)
 
