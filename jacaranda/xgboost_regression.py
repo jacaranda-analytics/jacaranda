@@ -74,7 +74,7 @@ class xgboost_regression():
         return accuracy
 
     def tune(self):
-        study = optuna.create_study(direction="minimize")
+        study = optuna.create_study(direction=self.config.OPTIMIZE_DIRECTION)
         study.optimize(self.objective, n_trials=self.config.N_TRIALS, timeout=self.config.TIMEOUT)
 
         print("Number of finished trials: ", len(study.trials))

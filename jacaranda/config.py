@@ -15,6 +15,7 @@ class config:
         dir:str = os.getcwd(),
         n_trials: int = 75,
         timeout: float = 600,
+        optimize_direction: str = "minimize",
         encode_level:float = 0.5,
     ):
         """
@@ -24,7 +25,8 @@ class config:
         Args:
             X (numpy.array): Independent Covariates
 
-            Y (numpy.array): Dependent Covariates (may be expressed as One hot encode)
+            Y (numpy.array): Dependent Covariates (may be expressed as One hot encode). Note,
+            needs to have two-dimensional shape.
 
             loss ([type], optional): Loss function for pytorch pipelines,
             does not need to be considered for other pipelines). Defaults to torch.nn.MSELoss().
@@ -53,6 +55,9 @@ class config:
             metric (function, optional): Function of metric to determine best model. 
             Defaults to sklearn.metrics.mean_squared_error.
 
+            optimize_direction (str, optional): Direction to optimize (valid inputs are
+            'maximize' and 'minimize'). Defaults to 'minimize'.
+
             encode_level (int, optional): Number of variable to autoencode to determined 
             by a proportion (must be  between 0 and 1) Defaults to 0.5
 
@@ -62,11 +67,12 @@ class config:
         self.EPOCHS = epochs
         self.SEED = seed
         self.DIR = dir
-        self.CLASSES = len([Y[0]])
+        self.CLASSES = Y.shape[1]
         self.LOSS = loss
         self.DEVICE = device
         self.IN_FEATURES_START = X.shape[1]
         self.N_TRIALS = n_trials
         self.TIMEOUT = timeout
         self.METRIC = metric
+        self.OPTIMIZE_DIRECTION = optimize_direction
         self.ENCODE_LEVEL = math.floor(X.shape[1]/encode_level)

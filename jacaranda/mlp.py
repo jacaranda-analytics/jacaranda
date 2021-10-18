@@ -83,7 +83,7 @@ class mlp():
             model.train()
             for train_data in train_loader:
                 data, target = train_data
-                target = target.unsqueeze(1)
+                # target = target.unsqueeze(1)
                 optimizer.zero_grad()
                 output = model(data)
                 loss = loss_function(output, target)
@@ -125,9 +125,7 @@ class mlp():
 
             for train_data in train_loader:
                 data, target = train_data
-                target = target.unsqueeze(1)
-
-
+                # target = target.unsqueeze(1)
                 optimizer.zero_grad()
                 output = model(data)
                 loss = loss_function(output, target)
@@ -138,7 +136,7 @@ class mlp():
 
 
     def tune(self):
-        study = optuna.create_study(direction="maximize")
+        study = optuna.create_study(direction=self.config.OPTIMIZE_DIRECTION)
         study.optimize(self.objective, n_trials=self.config.N_TRIALS, timeout=self.config.TIMEOUT)
 
         pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
