@@ -88,8 +88,6 @@ class pytorch_config:
         self.ENCODE_LEVEL = math.floor(X.shape[1]/encode_level)
 
 
-##############################
-
 class pytorch_general():
     """
     Flexible class to tune Pytorch models

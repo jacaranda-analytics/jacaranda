@@ -1,13 +1,71 @@
 import pandas as pd
-import numpy as np
-
+import numpy
 import xgboost as xgb
 import sklearn.metrics
-
 import optuna
+import typing, os
 
 
-class xgboost_regression():
+class xgboost_config:
+    '''  General configuration class for PyTorch hyper tuning to pass to each of 
+    the hyperparamter tuning class.
+    '''
+    def __init__(
+        self,
+        X:numpy.array,
+        Y:numpy.array,
+        metric:typing.Callable = sklearn.metrics.mean_squared_error,
+        validation_split: float = 0.2,
+        seed: float = 123,
+        dir:str = os.getcwd(),
+        n_trials: int = 75,
+        timeout: float = 600,
+        optimize_direction: str = "minimize",
+        objective = "reg:linear"
+    ):
+        """
+        Args:
+            X (numpy.array): Independent Covariates
+
+            Y (numpy.array): Dependent Covariates (may be expressed as One hot encode). Note,
+            needs to have two-dimensional shape.
+
+            validation_split (float, optional): Validation Split, must be between 0 and 
+            1 Defaults to 0.2.
+
+            seed (float, optional): Random seed used in data loader. Defaults to 123.
+
+            dir (str, optional): Directory to run pipeline. Defaults to os.getcwd().
+
+            n_trials (int, optional): Number of trials to run in the random grid search 
+            by Optuna Defaults to 75.
+
+            timeout (float, optional): Timeout for a single trial in Optuna random grid 
+            search. Defaults to 600.
+
+            metric (function, optional): Function of metric to determine best model. 
+            Defaults to sklearn.metrics.mean_squared_error.
+
+            optimize_direction (str, optional): Direction to optimize (valid inputs are
+            'maximize' and 'minimize'). Defaults to 'minimize'.
+
+            objective (str, optional): Learning task parameter for xgboost to minimise.
+            This also outlines the type of predition type. Defaults to 'reg:linear'.
+
+        """        
+        self.VALIDATION_SPLIT = validation_split
+        self.SEED = seed
+        self.DIR = dir
+        self.CLASSES = Y.shape[1]
+        self.IN_FEATURES_START = X.shape[-1]
+        self.N_TRIALS = n_trials
+        self.TIMEOUT = timeout
+        self.METRIC = metric
+        self.OPTIMIZE_DIRECTION = optimize_direction
+        self.OBJECTIVE = objective
+
+
+class xgboost_tune():
     def __init__(self, X, Y, config):
         self.X = X
         self.Y = Y
@@ -20,9 +78,9 @@ class xgboost_regression():
         # Creating data indices for training and validation splits:
         dataset_size = len(self.X)
         indices = list(range(dataset_size))
-        split = int(np.floor(self.config.VALIDATION_SPLIT * dataset_size))
-        np.random.seed(self.config.SEED)
-        np.random.shuffle(indices)
+        split = int(numpy.floor(self.config.VALIDATION_SPLIT * dataset_size))
+        numpy.random.seed(self.config.SEED)
+        numpy.random.shuffle(indices)
 
         valid_y = self.Y[:split]
         dtrain = xgb.DMatrix(self.X[split:], label=self.Y[split:])
@@ -36,7 +94,7 @@ class xgboost_regression():
 
         param = {
             "verbosity": 0,
-            "objective": "reg:linear",
+            "objective": self.config.OBJECTIVE,
             # use exact for small dataset.
             "tree_method": "exact",
             # defines booster, gblinear for linear functions.
@@ -69,7 +127,7 @@ class xgboost_regression():
 
         bst = xgb.train(param, dtrain)
         preds = bst.predict(dvalid)
-        pred_labels = np.rint(preds)
+        pred_labels = numpy.rint(preds)
         accuracy = self.config.METRIC(valid_y, pred_labels)
         return accuracy
 
