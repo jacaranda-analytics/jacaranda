@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+import numpy 
 import os 
 import torch.nn as nn
 import torch
@@ -16,8 +16,8 @@ class pytorch_config:
     '''
     def __init__(
         self,
-        X:np.array,
-        Y:np.array,
+        X:numpy.array,
+        Y:numpy.array,
         loss=torch.nn.MSELoss(),
         device: torch.device = torch.device("cpu"),
         metric:typing.Callable = sklearn.metrics.mean_squared_error,
@@ -97,14 +97,14 @@ class pytorch_general():
 
 
     def __init__(self, 
-                 X:np.array, 
-                 Y:np.array, 
+                 X:numpy.array, 
+                 Y:numpy.array, 
                  config: typing.Type[pytorch_config], 
                  define_model: typing.Type[nn.Module]):
         """
         Args:
-            X (np.array): Independent Covariates
-            Y (np.array): Dependent Covariates (may be expressed as One hot encode). 
+            X (numpy.array): Independent Covariates
+            Y (numpy.array): Dependent Covariates (may be expressed as One hot encode). 
             config (typing.Type[pytorch_config]): config class specific to X,Y
             define_model (typing.Type[nn.Module]):nn.Module to tune (can contain optuna trial aspects)
         """
@@ -124,9 +124,9 @@ class pytorch_general():
         # Creating data indices for training and validation splits:
         dataset_size = len(dataset)
         indices = list(range(dataset_size))
-        split = int(np.floor(self.config.VALIDATION_SPLIT * dataset_size))
-        np.random.seed(self.config.SEED)
-        np.random.shuffle(indices)
+        split = int(numpy.floor(self.config.VALIDATION_SPLIT * dataset_size))
+        numpy.random.seed(self.config.SEED)
+        numpy.random.shuffle(indices)
         train_indices, val_indices = indices[split:], indices[:split]
 
         # Creating PT data samplers and loaders:
@@ -183,7 +183,7 @@ class pytorch_general():
             # Validation of the model.
             model.eval()
             X_val, y_true = train_data
-            y_pred =  model(X_val).detach().np()
+            y_pred =  model(X_val).detach().numpy()
             accuracy = self.config.METRIC(y_true, y_pred)
 
             trial.report(accuracy, epoch)
@@ -364,11 +364,11 @@ class pytorch_cnn1d(nn.Module):
 class pytorch_autoencoder():
     """This is a class that tunes an autoencoder for given data
     """    
-    def __init__(self, X:np.array,  config: typing.Type[pytorch_config]):
+    def __init__(self, X:numpy.array,  config: typing.Type[pytorch_config]):
         """[summary]
 
         Args:
-            X (np.array): Independent Covariates
+            X (numpy.array): Independent Covariates
             config (typing.Type[pytorch_config]):config class specific this is handled by pytorch_general
         """        
         self.X = X
@@ -385,9 +385,9 @@ class pytorch_autoencoder():
         # Creating data indices for training and validation splits:
         dataset_size = len(dataset)
         indices = list(range(dataset_size))
-        split = int(np.floor(self.config.VALIDATION_SPLIT * dataset_size))
-        np.random.seed(self.config.SEED)
-        np.random.shuffle(indices)
+        split = int(numpy.floor(self.config.VALIDATION_SPLIT * dataset_size))
+        numpy.random.seed(self.config.SEED)
+        numpy.random.shuffle(indices)
         train_indices, val_indices = indices[split:], indices[:split]
 
         # Creating PT data samplers and loaders:
@@ -454,7 +454,7 @@ class pytorch_autoencoder():
 
             model.eval()
             X_val, y_true = train_data
-            y_pred =  model(X_val).detach().np()
+            y_pred =  model(X_val).detach().numpy()
             accuracy = self.config.METRIC(y_true, y_pred)
 
             trial.report(accuracy, epoch)
@@ -482,7 +482,7 @@ class pytorch_autoencoder():
                 """[summary]
 
                 Args:
-                    X (np.array): Independent Covariates (handled by outside class)
+                    X (numpy.array): Independent Covariates (handled by outside class)
                     encode_level (float): Encode reduction, proportion of variables to reduce to.
                     Must be positive (handled by outside class)
                 """                
