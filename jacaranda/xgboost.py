@@ -66,7 +66,19 @@ class xgboost_config:
 
 
 class xgboost_tune():
-    def __init__(self, X, Y, config):
+    """General XGboost tuning class. 
+    """    
+    def __init__(self, 
+                 X:numpy.array, 
+                 Y:numpy.array, 
+                 config: typing.Type[xgboost_config], ):
+        """
+        Args:
+            X (numpy.array): Independent Covariates
+            Y (numpy.array): Dependent Covariates (may be expressed as One hot encode). 
+            config (typing.Type[xgboost_config]): config class specific to X,Y
+        """        
+
         self.X = X
         self.Y = Y
         self.config = config
@@ -89,7 +101,14 @@ class xgboost_tune():
         return dtrain, dvalid, valid_y
 
     def objective(self,trial):
-        
+        """Objective function for Optuna tune. 
+
+        Args:
+            trial: Optuna trial
+
+        Returns:
+            float: accuracy of current model, defined by config.METRIC
+        """     
         dtrain, dvalid, valid_y = self.data_loader()
 
         param = {
@@ -132,6 +151,11 @@ class xgboost_tune():
         return accuracy
 
     def tune(self):
+        """Engages the Optuna search
+
+        Returns:
+            [type]: best model
+        """   
         study = optuna.create_study(direction=self.config.OPTIMIZE_DIRECTION)
         study.optimize(self.objective, n_trials=self.config.N_TRIALS, timeout=self.config.TIMEOUT)
 
