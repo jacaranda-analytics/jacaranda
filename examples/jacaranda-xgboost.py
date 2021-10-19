@@ -1,11 +1,4 @@
-import pandas as pd
 import numpy as np
-import os
-import optuna
-from optuna.trial import TrialState
-import random
-import xgboost as xgb
-
 import jacaranda.xgboost as jac_xgb
 
 # Genereate 50 realisations with 10 covariates

@@ -1,15 +1,4 @@
-import pandas as pd
 import numpy as np
-import os
-import torch.nn as nn
-import torch
-import torch.optim as optim
-from torch.nn.modules.loss import MSELoss
-from torch.utils.data.sampler import SubsetRandomSampler
-import optuna
-from optuna.trial import TrialState
-import random
-
 import jacaranda.pytorch as jac_torch
 
 # Genereate 50 realisations with 10 covariates
