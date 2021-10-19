@@ -65,7 +65,7 @@ class xgboost_config:
         self.OBJECTIVE = objective
 
 
-class xgboost_tune():
+class xgboost_general():
     """General XGboost tuning class. 
     """    
     def __init__(self, 

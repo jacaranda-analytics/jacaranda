@@ -1,6 +1,6 @@
 import pandas as pd
-import numpy 
-import os 
+import numpy
+import os
 import torch.nn as nn
 import torch
 import torch.optim as optim
@@ -10,26 +10,28 @@ from optuna.trial import TrialState
 import sklearn.metrics
 import os, typing, math
 
+
 class pytorch_config:
-    '''  General configuration class for PyTorch hyper tuning to pass to each of 
+    """General configuration class for PyTorch hyper tuning to pass to each of
     the hyperparamter tuning class.
-    '''
+    """
+
     def __init__(
         self,
-        X:numpy.array,
-        Y:numpy.array,
+        X: numpy.array,
+        Y: numpy.array,
         loss=torch.nn.MSELoss(),
         device: torch.device = torch.device("cpu"),
-        metric:typing.Callable = sklearn.metrics.mean_squared_error,
+        metric: typing.Callable = sklearn.metrics.mean_squared_error,
         batchsize: int = 100,
         validation_split: float = 0.2,
         epochs: int = 20,
         seed: float = 123,
-        dir:str = os.getcwd(),
+        dir: str = os.getcwd(),
         n_trials: int = 75,
         timeout: float = 600,
         optimize_direction: str = "minimize",
-        encode_level:float = 0.5,
+        encode_level: float = 0.5,
     ):
         """
         Args:
@@ -71,7 +73,7 @@ class pytorch_config:
             encode_level (int, optional): Number of variable to autoencode to determined 
             by a proportion (must be  between 0 and 1) Defaults to 0.5
 
-        """        ''''''
+        """ """"""
         self.BATCHSIZE = batchsize
         self.VALIDATION_SPLIT = validation_split
         self.EPOCHS = epochs
@@ -85,24 +87,25 @@ class pytorch_config:
         self.TIMEOUT = timeout
         self.METRIC = metric
         self.OPTIMIZE_DIRECTION = optimize_direction
-        self.ENCODE_LEVEL = math.floor(X.shape[1]/encode_level)
+        self.ENCODE_LEVEL = math.floor(X.shape[1] / encode_level)
 
 
-class pytorch_general():
+class pytorch_general:
     """
     Flexible class to tune Pytorch models
     """
 
-
-    def __init__(self, 
-                 X:numpy.array, 
-                 Y:numpy.array, 
-                 config: typing.Type[pytorch_config], 
-                 define_model: typing.Type[nn.Module]):
+    def __init__(
+        self,
+        X: numpy.array,
+        Y: numpy.array,
+        config: typing.Type[pytorch_config],
+        define_model: typing.Type[nn.Module],
+    ):
         """
         Args:
             X (numpy.array): Independent Covariates
-            Y (numpy.array): Dependent Covariates (may be expressed as One hot encode). 
+            Y (numpy.array): Dependent Covariates (may be expressed as One hot encode).
             config (typing.Type[pytorch_config]): config class specific to X,Y
             define_model (typing.Type[nn.Module]):nn.Module to tune (can contain optuna trial aspects)
         """
@@ -116,7 +119,7 @@ class pytorch_general():
         self.model_metric = "Model has not been tuned yet"
 
     def data_loader(self):
-    
+
         dataset = [[self.X[i], self.Y[i]] for i in range(len(self.X))]
 
         # Creating data indices for training and validation splits:
@@ -141,12 +144,12 @@ class pytorch_general():
         return train_loader, validation_loader
 
     def objective(self, trial):
-        """Objective function for Optuna tune. 
+        """Objective function for Optuna tune.
 
         Args:
             trial: Optuna trial
         Raises:
-            optuna.exceptions.TrialPruned: Optuna inbuilt pruning 
+            optuna.exceptions.TrialPruned: Optuna inbuilt pruning
 
         Returns:
             float: accuracy of current model, defined by config.METRIC
@@ -180,13 +183,12 @@ class pytorch_general():
 
             # Validation of the model.
             model.eval()
-            
-            #need to fix, this
+
+            # need to fix, this
             for val_data in valid_loader:
                 X_val, y_true = val_data
 
-                
-            y_pred =  model(X_val).detach().numpy()
+            y_pred = model(X_val).detach().numpy()
             accuracy = self.config.METRIC(y_true, y_pred)
 
             trial.report(accuracy, epoch)
@@ -197,7 +199,7 @@ class pytorch_general():
 
         return accuracy
 
-    def build_model(self,study):
+    def build_model(self, study):
         """Rebuilds best model from Optuna search
 
         Args:
@@ -205,20 +207,19 @@ class pytorch_general():
 
         Returns:
             [type]: best model
-        """        
+        """
         model = self.define_model(self.config, study.best_trial).to(self.config.DEVICE)
 
-        #Data
+        # Data
         train_loader, _ = self.data_loader()
 
-        #Loss
-        loss_function=self.config.LOSS
+        # Loss
+        loss_function = self.config.LOSS
 
-        #Optimiser
-        optimizer_name = study.best_trial.params['optimizer']
-        lr = study.best_trial.params['lr']
+        # Optimiser
+        optimizer_name = study.best_trial.params["optimizer"]
+        lr = study.best_trial.params["lr"]
         optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
-
 
         # Training of the model.
         for _ in range(self.config.EPOCHS):
@@ -232,18 +233,19 @@ class pytorch_general():
                 loss = loss_function(output, target)
                 loss.backward()
                 optimizer.step()
-        
-        return model
 
+        return model
 
     def tune(self):
         """Engages the Optuna search
 
         Returns:
             [type]: best model
-        """        
+        """
         study = optuna.create_study(direction=self.config.OPTIMIZE_DIRECTION)
-        study.optimize(self.objective, n_trials=self.config.N_TRIALS, timeout=self.config.TIMEOUT)
+        study.optimize(
+            self.objective, n_trials=self.config.N_TRIALS, timeout=self.config.TIMEOUT
+        )
 
         pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
         complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
@@ -267,22 +269,21 @@ class pytorch_general():
 
         model = self.build_model(study)
         self.model = model
-        
+
         return model
 
 
-
 class pytorch_mlp(nn.Module):
-    """General class for an mlp, this is passed to pytorch_general to tune an mlp.
-    """  
+    """General class for an mlp, this is passed to pytorch_general to tune an mlp."""
+
     def __init__(self, config: typing.Type[pytorch_config], trial):
         """[summary]
 
         Args:
             config (typing.Type[pytorch_config]): config class specific this is handled by pytorch_general
             trial: Optuna trial
-        """       
-        super(pytorch_mlp,self).__init__()
+        """
+        super(pytorch_mlp, self).__init__()
 
         self.trial = trial
 
@@ -310,49 +311,50 @@ class pytorch_mlp(nn.Module):
 
 
 class pytorch_cnn1d(nn.Module):
-    """General class for a cnn, this is passed to pytorch_general to tune an mlp.
-    """ 
-    def __init__(self,  config: typing.Type[pytorch_config], trial):
+    """General class for a cnn, this is passed to pytorch_general to tune an mlp."""
+
+    def __init__(self, config: typing.Type[pytorch_config], trial):
         """[summary]
 
         Args:
             config (typing.Type[pytorch_config]): config class specific this is handled by pytorch_general
             trial: Optuna trial
-        """  
-        super(pytorch_cnn1d,self).__init__()
+        """
+        super(pytorch_cnn1d, self).__init__()
 
         self.trial = trial
 
         in_features = config.IN_FEATURES_START
         layers1 = []
         layers2 = []
-        
-        def output(w, k, p=0, s =1):
-            return (w - k + 2*p)/s + 1
+
+        def output(w, k, p=0, s=1):
+            return (w - k + 2 * p) / s + 1
 
         # this computes no of features outputted by 2 conv layers
-    
+
         # self.n_conv = int((( ( (self.in_features - 2)/4 ) - 2 )/4 ) * 16)
 
-        num_filters1 = trial.suggest_int("num_filters1",16,64,step=16)
-        num_filters2 = trial.suggest_int("num_filters2",16,64,step=16)
-        # num_filters2 = 16 
-        kernel_size = trial.suggest_int('kernel_size', 2, 7)
+        num_filters1 = trial.suggest_int("num_filters1", 16, 64, step=16)
+        num_filters2 = trial.suggest_int("num_filters2", 16, 64, step=16)
+        # num_filters2 = 16
+        kernel_size = trial.suggest_int("kernel_size", 2, 7)
 
-        c1 = output(w = in_features, k = kernel_size)  # this is to account for the loss due to conversion to int type
-        c2 = output(w = c1, k = kernel_size)
+        c1 = output(
+            w=in_features, k=kernel_size
+        )  # this is to account for the loss due to conversion to int type
+        c2 = output(w=c1, k=kernel_size)
         n_conv = int(c2 * num_filters2)
-        
 
         layers1.append(nn.Conv1d(1, num_filters1, kernel_size, 1))
         layers1.append(nn.BatchNorm1d(num_filters1))
         layers1.append(nn.Conv1d(num_filters1, num_filters2, kernel_size, 1))
         layers1.append(nn.BatchNorm1d(num_filters2))
 
-        #Add in trial range for dropout to determine optimal dropout value
+        # Add in trial range for dropout to determine optimal dropout value
         # self.dp = nn.Dropout(trial.suggest_uniform('dropout_rate',0,1.0))
         layers2.append(nn.Linear(n_conv, 1))
-        
+
         self.layers1 = nn.Sequential(*layers1)
         self.layers2 = nn.Sequential(*layers2)
 
@@ -364,16 +366,16 @@ class pytorch_cnn1d(nn.Module):
         return x
 
 
-class pytorch_autoencoder():
-    """This is a class that tunes an autoencoder for given data
-    """    
-    def __init__(self, X:numpy.array,  config: typing.Type[pytorch_config]):
+class pytorch_autoencoder:
+    """This is a class that tunes an autoencoder for given data"""
+
+    def __init__(self, X: numpy.array, config: typing.Type[pytorch_config]):
         """[summary]
 
         Args:
             X (numpy.array): Independent Covariates
             config (typing.Type[pytorch_config]):config class specific this is handled by pytorch_general
-        """        
+        """
         self.X = X
         self.Y = X
         self.config = config
@@ -382,7 +384,7 @@ class pytorch_autoencoder():
         self.model_metric = "Model has not been tuned yet"
 
     def data_loader(self):
-    
+
         dataset = [[self.X[i], self.Y[i]] for i in range(len(self.X))]
 
         # Creating data indices for training and validation splits:
@@ -407,12 +409,12 @@ class pytorch_autoencoder():
         return train_loader, validation_loader
 
     def objective(self, trial):
-        """Objective function for Optuna tune. 
+        """Objective function for Optuna tune.
 
         Args:
             trial: Optuna trial
         Raises:
-            optuna.exceptions.TrialPruned: Optuna inbuilt pruning 
+            optuna.exceptions.TrialPruned: Optuna inbuilt pruning
 
         Returns:
             float: accuracy of current model, defined by config.METRIC
@@ -429,7 +431,7 @@ class pytorch_autoencoder():
         in_features = out_features
         layers.append(nn.Linear(in_features, self.config.CLASSES))
         model = nn.Sequential(*layers).to(self.config.DEVICE)
-        
+
         # model = self.define_model(trial).to(self.config.DEVICE)
 
         # Generate the optimizers.
@@ -454,13 +456,12 @@ class pytorch_autoencoder():
                 loss.backward()
                 optimizer.step()
 
-
             model.eval()
-            #need to fix, this
+            # need to fix, this
             for val_data in valid_loader:
                 X_val, y_true = val_data
-                
-            y_pred =  model(X_val).detach().numpy()
+
+            y_pred = model(X_val).detach().numpy()
             accuracy = self.config.METRIC(y_true, y_pred)
 
             trial.report(accuracy, epoch)
@@ -471,7 +472,7 @@ class pytorch_autoencoder():
 
         return accuracy
 
-    def build_model(self,study):
+    def build_model(self, study):
         """Rebuilds best model from Optuna search
 
         Args:
@@ -479,41 +480,44 @@ class pytorch_autoencoder():
 
         Returns:
             [type]: best model
-        """ 
-        
-        class autoencoder_final(nn.Module):
-            """General autoencoder class to tune
-            """            
-            def __init__(self,X,encode_level):
-                """[summary]
+        """
 
+        class autoencoder_final(nn.Module):
+            """General autoencoder class to tune"""
+
+            def __init__(self, X, encode_level):
+                """
                 Args:
                     X (numpy.array): Independent Covariates (handled by outside class)
                     encode_level (float): Encode reduction, proportion of variables to reduce to.
                     Must be positive (handled by outside class)
-                """                
-                super(autoencoder_final,self).__init__()
-                self.encoder = nn.Sequential(nn.Linear(X.shape[1],encode_level),nn.ReLU())
-                self.decoder = nn.Linear(encode_level,X.shape[1])
-            def forward(self,x):
+                """
+                super(autoencoder_final, self).__init__()
+                self.encoder = nn.Sequential(
+                    nn.Linear(X.shape[1], encode_level), nn.ReLU()
+                )
+                self.decoder = nn.Linear(encode_level, X.shape[1])
+
+            def forward(self, x):
                 latent = self.encoder(x)
                 decoded = self.decoder(latent)
                 decoded = torch.sigmoid(decoded)
                 return decoded, latent
 
-        model = autoencoder_final(self.X, self.config.ENCODE_LEVEL).to(self.config.DEVICE)
+        model = autoencoder_final(self.X, self.config.ENCODE_LEVEL).to(
+            self.config.DEVICE
+        )
 
-        #Data
+        # Data
         train_loader, _ = self.data_loader()
 
-        #Loss
-        loss_function=nn.MSELoss()
+        # Loss
+        loss_function = nn.MSELoss()
 
-        #Optimiser
-        optimizer_name = study.best_trial.params['optimizer']
-        lr = study.best_trial.params['lr']
+        # Optimiser
+        optimizer_name = study.best_trial.params["optimizer"]
+        lr = study.best_trial.params["lr"]
         optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=lr)
-
 
         # Training of the model.
         for _ in range(self.config.EPOCHS):
@@ -523,24 +527,24 @@ class pytorch_autoencoder():
                 data, target = train_data
                 # target = target.unsqueeze(1)
 
-
                 optimizer.zero_grad()
-                output,_ = model(data)
+                output, _ = model(data)
                 loss = loss_function(output, target)
                 loss.backward()
                 optimizer.step()
-        
-        return model
 
+        return model
 
     def tune(self):
         """Engages the Optuna search
 
         Returns:
             [type]: best model
-        """ 
+        """
         study = optuna.create_study(direction="maximize")
-        study.optimize(self.objective, n_trials=self.config.N_TRIALS, timeout=self.config.TIMEOUT)
+        study.optimize(
+            self.objective, n_trials=self.config.N_TRIALS, timeout=self.config.TIMEOUT
+        )
 
         pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
         complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
@@ -566,7 +570,3 @@ class pytorch_autoencoder():
         self.model = model
 
         return model
-
-
-
-
