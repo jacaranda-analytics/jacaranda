@@ -180,7 +180,12 @@ class pytorch_general():
 
             # Validation of the model.
             model.eval()
-            X_val, y_true = valid_loader
+            
+            #need to fix, this
+            for val_data in valid_loader:
+                X_val, y_true = val_data
+
+                
             y_pred =  model(X_val).detach().numpy()
             accuracy = self.config.METRIC(y_true, y_pred)
 
@@ -451,7 +456,10 @@ class pytorch_autoencoder():
 
 
             model.eval()
-            X_val, y_true = valid_loader
+            #need to fix, this
+            for val_data in valid_loader:
+                X_val, y_true = val_data
+                
             y_pred =  model(X_val).detach().numpy()
             accuracy = self.config.METRIC(y_true, y_pred)
 
