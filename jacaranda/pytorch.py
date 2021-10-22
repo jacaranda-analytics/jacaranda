@@ -12,6 +12,8 @@ import sklearn.metrics
 import os, typing, math
 
 
+
+
 class pytorch_config:
     """General configuration class for PyTorch hyper tuning to pass to each of
     the hyperparamter tuning class.
@@ -21,9 +23,9 @@ class pytorch_config:
         self,
         X: numpy.array,
         Y: numpy.array,
-        loss=torch.nn.MSELoss(),
+        loss: typing.Callable,
+        metric: typing.Callable,
         device: torch.device = torch.device("cpu"),
-        metric: typing.Callable = sklearn.metrics.mean_squared_error,
         batchsize: int = 100,
         validation_split: float = 0.2,
         epochs: int = 20,
@@ -42,7 +44,9 @@ class pytorch_config:
             needs to have two-dimensional shape.
 
             loss ([type], optional): Loss function for pytorch pipelines,
-            does not need to be considered for other pipelines). Defaults to torch.nn.MSELoss().
+            does not need to be considered for other pipelines).
+
+            metric (function, optional): Function of metric to determine best model. 
 
             device (torch.device, optional): Device to run solve for Pytorch pipelines. 
             This does not need to be considered for other pipelines. Defaults to torch.device("cpu").
@@ -64,9 +68,6 @@ class pytorch_config:
 
             timeout (float, optional): Timeout for a single trial in Optuna random grid 
             search. Defaults to 600.
-
-            metric (function, optional): Function of metric to determine best model. 
-            Defaults to sklearn.metrics.mean_squared_error.
 
             optimize_direction (str, optional): Direction to optimize (valid inputs are
             'maximize' and 'minimize'). Defaults to 'minimize'.

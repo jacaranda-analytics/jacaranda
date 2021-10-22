@@ -14,7 +14,7 @@ def loss_function(x, model, target):
 def metric_function(x, model, target):
     return loss_function(x, model, target).item()
 
-config = jac_torch.pytorch_config(X, Y, n_trials=2, loss = loss_function, metric= metric_function)
+config = jac_torch.pytorch_config(X, Y, loss = loss_function, metric= metric_function, n_trials=2)
 
 mlp = jac_torch.pytorch_general(X, Y, config, define_model=jac_torch.pytorch_mlp)
 mlp.tune()
