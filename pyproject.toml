@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jacaranda"
+description = "Jacaranda Python Library"
+authors = [{name = "Harry Goodman", email = "harryfgoodman@gmail.com"}, {name = "Gabriel Dennis", email = "gabrieldennis17@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.8.1"
+license = {text = "MIT"}
+dependencies = [
+    "pandas",
+    "numpy", 
+    "torch", 
+    "optuna", 
+    "scikit-learn", 
+    "xgboost", 
+]
+dynamic = ["version"]
+
