@@ -1,6 +1,6 @@
 Jacaranda 
 ========================
-[![PyPI version](https://badge.fury.io/py/fraser_gehrig.svg)](https://badge.fury.io/py/fraser_gehrig) [![GitHub version](https://badge.fury.io/gh/jacaranda-analytics%2Ffraser-gehrig.svg)](https://badge.fury.io/gh/jacaranda-analytics%2Ffraser-gehrig)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://badge.fury.io/py/jacaranda.svg)](https://badge.fury.io/py/jacaranda) [![GitHub version](https://badge.fury.io/gh/jacaranda-analytics%2Fjacaranda.svg)](https://badge.fury.io/gh/jacaranda-analytics%2Fjacaranda)[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
