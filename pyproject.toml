@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jacaranda"
+version = "0.0.1"
 description = "Jacaranda Python Library"
 authors = [{name = "Harry Goodman", email = "harryfgoodman@gmail.com"}, {name = "Gabriel Dennis", email = "gabrieldennis17@gmail.com"}]
 readme = "README.md"
@@ -18,5 +19,4 @@ dependencies = [
     "scikit-learn", 
     "xgboost", 
 ]
-dynamic = ["version"]
 
